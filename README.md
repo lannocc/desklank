@@ -1,2 +1,19 @@
 # desklank
-Text-mode peer-to-peer messaging utilizing LANK and DeskApp frameworks
+
+Text-mode peer-to-peer messaging utilizing LANK and DeskApp frameworks.
+
+## Installation
+
+It is easy to install desklank using pip:
+```
+pip install desklank
+```
+
+## Usage
+
+Once installed, simply run the `desklank` command from any terminal.
+
+## Author
+
+Created by Shawn A. Wilson [lannocc@yahoo.com] aka LANNOCC.
+

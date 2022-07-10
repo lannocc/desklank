@@ -1,0 +1,3 @@
+# The single dot below pulls in requirements from setup.py:
+.
+
