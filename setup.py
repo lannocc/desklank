@@ -9,7 +9,8 @@ def run():
         author_email='lannocc@yahoo.com',
         url='https://github.com/lannocc/desklank',
         packages=setuptools.find_packages(),
-        description='LANK User',
+        description='Text-mode peer-to-peer messaging utilizing LANK and' \
+            + ' DeskApp frameworks',
         long_description_content_type='text/markdown',
         long_description=open('README.md').read(),
         classifiers=[
