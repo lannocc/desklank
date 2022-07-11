@@ -1,4 +1,5 @@
 from .__version__ import __version__
+from . import config
 from .page.connect import Module as Connect
 from .page.labels import Module as Labels
 from .page.peers import Module as Peers
@@ -14,8 +15,8 @@ import sys
 class Application:
     def __init__(self):
         print(f'desklank v{__version__}')
-        self.header = 'Peer-to-Peer Encrypted Messaging: Connect to Begin'
-        self.verbose = '-v' in sys.argv
+        self.header = 'Peer-to-Peer Encrypted Communication: Connect to Begin'
+        self.verbose = '-v' in sys.argv or '--verbose' in sys.argv
 
         try:
             from .systray import Icon as TrayIcon
@@ -33,12 +34,13 @@ class Application:
             modules=[Connect, Labels, Peers],
             title=f'desklank v{__version__}',
             header=self.header,
-            v_split=(0.33 if self.verbose else 0.16),
+            v_split=(0.33 if self.verbose else 0.18),
             demo_mode=False)
         self.desk.top = self
         self.desk.tw = self.tw
 
         self.node = None
+        self.interests = config.load_interests()
 
         self.finished = False
         self.exiting = False
@@ -129,7 +131,7 @@ class Application:
         self.desk.set_header(self.tw(self.desk.frontend.screen_w - 2,
             f'[{title}] >> {msg}'))
 
-    def tw(self, w, txt, c=' '):
+    def tw(self, w, txt='', c=' '):
         if not isinstance(txt, str): txt = f'{txt}'
         size = len(txt)
         if size >= w: return txt

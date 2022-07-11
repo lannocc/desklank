@@ -32,16 +32,16 @@ class Module(deskapp.Module):
         w = 22
 
         self.scroll_elements = [
-            ('Local Port:', self.app.tw(w, self.port, '_')),
-            ('     Alias:', self.app.tw(w, self.alias, '_')),
-            ('     Label:', self.app.tw(w, self.label, '_')),
-            ('  Password:', self.app.tw(w, pwd_masked, '_')),
+            ('Local Port:', self.app.tw(w, self.port)),
+            ('     Alias:', self.app.tw(w, self.alias)),
+            ('     Label:', self.app.tw(w, self.label)),
+            ('  Password:', self.app.tw(w, pwd_masked)),
             (None, self.app.tw(12, f'[{connect}]')),
         ]
 
         for idx, (label, value) in enumerate(self.scroll_elements):
             if label:
-                panel.addstr(idx+2, 2, label, self.frontend.chess_white)
+                panel.addstr(idx+2, 2, label)
 
             panel.addstr(idx+2, 14, value, self.frontend.color_rw
                 if idx == self.scroll else self.frontend.chess_white)

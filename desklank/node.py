@@ -32,6 +32,7 @@ class Client(Thread):
 
         self.ping = None
         self.sign_on = False
+        self.labels_callback = None
         self.history_callback = None
 
         self.sender_thread = Thread(
@@ -96,24 +97,34 @@ class Client(Thread):
         config.save_connect_label(self.label)
         config.save_connect_alias(self.alias)
 
-        self.input.put_nowait(ListLabels())
-        msg = self.output.get(timeout=GENERAL_TIMEOUT)
-        if not msg: return
-        if not isinstance(msg, LabelsList):
-            return self.error(f'failed to get labels list: {msg}')
+        #self.input.put_nowait(ListLabels())
+        #msg = self.output.get(timeout=GENERAL_TIMEOUT)
+        #if not msg: return
+        #if not isinstance(msg, LabelsList):
+        #    return self.error(f'failed to get labels list: {msg}')
 
-        self.print(f'labels: {msg.labels}')
+        #self.print(f'labels: {msg.labels}')
         #self.app.home.pnl_labels.refresh_labels(msg.labels)
 
         #for label in msg.labels:
         #    if label in self.app.home.pnl_labels.interests:
         #        self.input.put(LabelInterest(label))
 
+        for label in self.app.interests:
+            self.input.put(LabelInterest(label))
+
         self.on_connect()
 
-    def notify(self, label, notify=True):
+    def interest(self, label, notify=True):
         self.input.put_nowait(
             LabelInterest(label) if notify else LabelIgnore(label))
+
+    def get_labels(self, callback):
+        if self.labels_callback:
+            return self.error(f'never received last labels request')
+
+        self.labels_callback = callback
+        self.input.put_nowait(ListLabels())
 
     def get_history(self, label, callback):
         if self.history_callback:
@@ -184,8 +195,13 @@ class Client(Thread):
                     if self.sign_on:
                         self.output.put(msg)
 
+                elif isinstance(msg, LabelsList) and self.labels_callback:
+                    self.labels_callback(msg.labels)
+                    self.labels_callback = None
+
                 elif isinstance(msg, History) and self.history_callback:
                     self.history_callback(msg)
+                    self.history_callback = None
 
                 else:
                     self.output.put(msg)
