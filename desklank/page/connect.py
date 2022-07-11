@@ -9,7 +9,7 @@ import random
 CLASS_ID = random.random()
 
 class Module(deskapp.Module):
-    name = "Connect"
+    name = 'Connect'
 
     def __init__(self, app):
         super().__init__(app)
@@ -19,33 +19,32 @@ class Module(deskapp.Module):
         self.alias = config.load_connect_alias() or ''
         self.label = config.load_connect_label() or 'anonymous'
         self.pwd = ''
+        self.app.data['connect'] = None
 
         self.register_module()
 
     def page(self, panel):
-        panel.addstr(1, 1, 'foobar')
-
-    def page(self, panel):
         pwd_masked = '*' * len(self.pwd)
-        w = 42
+        connect = self.app.data['connect']
+        connect = 'Disconnect' if connect else 'Cancel' \
+                    if connect == False else 'Connect'
+        #w = self.max_w - 2
+        w = 22
 
         self.scroll_elements = [
-            self.tw(w, f'Local Port: {self.port}'),
-            self.tw(w, f'     Alias: {self.alias}'),
-            self.tw(w, f'     Label: {self.label}'),
-            self.tw(w, f'  Password: {pwd_masked}'),
-            self.tw(w,  '            [Connect]')
+            ('Local Port:', self.app.tw(w, self.port, '_')),
+            ('     Alias:', self.app.tw(w, self.alias, '_')),
+            ('     Label:', self.app.tw(w, self.label, '_')),
+            ('  Password:', self.app.tw(w, pwd_masked, '_')),
+            (None, self.app.tw(12, f'[{connect}]')),
         ]
 
-        for idx, option in enumerate(self.scroll_elements):
-            color = self.frontend.color_rw \
-                if idx == self.scroll else self.frontend.chess_white
-            panel.addstr(idx+2, 4, option, color)
+        for idx, (label, value) in enumerate(self.scroll_elements):
+            if label:
+                panel.addstr(idx+2, 2, label, self.frontend.chess_white)
 
-    def tw(self, w, txt):
-        size = len(txt)
-        if size >= w: return txt
-        return txt + ' '*(w-size)
+            panel.addstr(idx+2, 14, value, self.frontend.color_rw
+                if idx == self.scroll else self.frontend.chess_white)
 
     def string_decider(self, panel, txt):
         if self.scroll == 0:
@@ -63,8 +62,10 @@ class Module(deskapp.Module):
     @deskapp.callback(CLASS_ID, deskapp.Keys.ENTER)
     def on_enter(self, *args, **kwargs):
         if self.scroll == 4:
-            self.app.top.connect(self.port, self.label, self.pwd, self.alias)
+            if self.app.data['connect'] is None:
+                self.app.top.connect(self.port, self.label, self.pwd,
+                                     self.alias)
 
-if __name__ == "__main__":
-    deskapp.App([Module]).start()
+            else:
+                self.app.top.disconnect()
 

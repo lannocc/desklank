@@ -8,7 +8,7 @@ class Icon(Base):
         icon_image = self.create_image(64, 64, 'green', 'white')
 
         super().__init__(
-            'lanku',
+            'desklank',
             icon=icon_image,
             menu=Menu(
                 #MenuItem(

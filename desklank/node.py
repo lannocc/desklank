@@ -12,7 +12,8 @@ import sys
 
 
 class Client(Thread):
-    def __init__(self, app, port, label, pwd, alias, verbose=True):
+    def __init__(self, app, port, label, pwd, alias,
+            on_error, on_connect, verbose=True):
         super().__init__(name='node-client')
         self.app = app
         self.verbose = verbose
@@ -22,6 +23,8 @@ class Client(Thread):
         self.host = self.get_public_ip()
         self.port = port
         self.alias = alias or None
+        self.on_error = on_error
+        self.on_connect = on_connect
 
         self.node = None
         self.input = Queue(maxsize=1)
@@ -105,6 +108,8 @@ class Client(Thread):
         #for label in msg.labels:
         #    if label in self.app.home.pnl_labels.interests:
         #        self.input.put(LabelInterest(label))
+
+        self.on_connect()
 
     def notify(self, label, notify=True):
         self.input.put_nowait(
@@ -218,6 +223,7 @@ class Client(Thread):
 
     def error(self, e):
         if not self.node: return
-        print(f'** ERROR ** {e}')
+        #print(f'** ERROR ** {e}')
+        self.on_error(f'** ERROR ** {e}')
         self.stop()
 
