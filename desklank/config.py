@@ -21,7 +21,7 @@ def _save_(filename, txt):
     config = join(DIRS.user_data_dir, filename)
 
     with open(config, 'w') as config:
-        config.write(txt)
+        config.write(txt or '')
 
 def load_connect_label():
     return _load_('label')

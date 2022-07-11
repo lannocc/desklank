@@ -1,4 +1,5 @@
 from .__version__ import __version__
+from .page.connect import Module as Connect
 from .page.status import Module as Status
 from .node import Client as Node
 
@@ -24,7 +25,12 @@ class Application:
             self.tray_icon = None
             self.tray_thread = None
 
-        self.desk = deskapp.App([Status])
+        self.desk = deskapp.App(
+            modules=[Connect, Status],
+            title=f'desklank v{__version__}',
+            header='Peer-to-Peer Encrypted Messaging',
+            demo_mode=False)
+        self.desk.top = self
         self.node = None
 
         self.finished = False
@@ -49,7 +55,7 @@ class Application:
     def quit(self):
         if self.exiting: return
         self.exiting = True
-        print('quit')
+        #print('quit')
 
         if self.tray_icon:
             self.tray_icon.stop()
@@ -59,21 +65,20 @@ class Application:
 
         self.disconnect()
 
-    def connect(self):
-        print('connecting')
-        #print(f'pass: {self.home.pnl_config.pwd.value}')
+    def connect(self, port, label, pwd, alias):
+        #print('connecting')
 
-        self.node = Node(self)
+        self.node = Node(self, port, label, pwd, alias, verbose=False)
         self.node.start()
 
     def disconnect(self):
         if not self.node: return
-        print('disconnecting')
+        #print('disconnecting')
         node = self.node
         self.node = None
         node.stop()
         node.join()
-        print('finished')
+        #print('finished')
 
     def notify(self, signed):
         if signed.name == lank.name.REGISTER:
@@ -93,7 +98,7 @@ class Application:
 
     def _notify_(self, title, msg):
         if self.tray_icon:
-            self.tray_icon.notify(msg, f'{title} | lanku')
+            self.tray_icon.notify(msg, f'{title} | desklank')
 
         else:
             print(f'@@ NOTICE [{title}] @@')

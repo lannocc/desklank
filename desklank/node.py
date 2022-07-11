@@ -12,17 +12,16 @@ import sys
 
 
 class Client(Thread):
-    def __init__(self, app, verbose=True):
+    def __init__(self, app, port, label, pwd, alias, verbose=True):
         super().__init__(name='node-client')
         self.app = app
         self.verbose = verbose
 
-        self.label = self.app.home.pnl_config.label.value
-        self.pwd = self.app.home.pnl_config.pwd.value
-        #self.app.home.pnl_config.pwd.value = ''
+        self.label = label
+        self.pwd = pwd or None
         self.host = self.get_public_ip()
-        self.port = int(self.app.home.pnl_config.peer_port.value)
-        self.alias = self.app.home.pnl_config.alias.value
+        self.port = port
+        self.alias = alias or None
 
         self.node = None
         self.input = Queue(maxsize=1)
@@ -101,12 +100,11 @@ class Client(Thread):
             return self.error(f'failed to get labels list: {msg}')
 
         self.print(f'labels: {msg.labels}')
-        #del msg.labels[msg.labels.index(self.label)]
-        self.app.home.pnl_labels.refresh_labels(msg.labels)
+        #self.app.home.pnl_labels.refresh_labels(msg.labels)
 
-        for label in msg.labels:
-            if label in self.app.home.pnl_labels.interests:
-                self.input.put(LabelInterest(label))
+        #for label in msg.labels:
+        #    if label in self.app.home.pnl_labels.interests:
+        #        self.input.put(LabelInterest(label))
 
     def notify(self, label, notify=True):
         self.input.put_nowait(
@@ -129,7 +127,7 @@ class Client(Thread):
         self.output.put_nowait(None)
         self.input.put_nowait(None)
 
-        self.app.home.pnl_labels.refresh_labels()
+        #self.app.home.pnl_labels.refresh_labels()
 
     def join(self):
         self.receiver_thread.join()
