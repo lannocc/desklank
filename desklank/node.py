@@ -214,16 +214,18 @@ class Client(Thread):
     def print(self, msg, newline=True):
         if not self.verbose: return
 
-        if newline:
-            print(msg)
+        #if newline:
+        #    print(msg)
 
-        else:
-            print(msg, end='')
-            sys.stdout.flush()
+        #else:
+        #    print(msg, end='')
+        #    sys.stdout.flush()
+
+        self.app.desk.print(msg)
 
     def error(self, e):
         if not self.node: return
         #print(f'** ERROR ** {e}')
-        self.on_error(f'** ERROR ** {e}')
+        self.on_error(e)
         self.stop()
 

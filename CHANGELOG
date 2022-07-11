@@ -1,6 +1,8 @@
 Copyright (C) 2022 LANNOCC (Shawn A. Wilson [lannocc@yahoo.com])
 @%@~LICENSE:MIT~@%@
 
+saw_071022_5 - Add verbose option ('-v' on command-line).
+
 saw_071022_4 - Notifications.
 
 saw_071022_3 - Connect works.

@@ -14,7 +14,8 @@ import sys
 class Application:
     def __init__(self):
         print(f'desklank v{__version__}')
-        self.header = 'Peer-to-Peer Encrypted Messaging: Hit Connect to Begin'
+        self.header = 'Peer-to-Peer Encrypted Messaging: Connect to Begin'
+        self.verbose = '-v' in sys.argv
 
         try:
             from .systray import Icon as TrayIcon
@@ -32,6 +33,7 @@ class Application:
             modules=[Connect, Labels, Peers],
             title=f'desklank v{__version__}',
             header=self.header,
+            v_split=(0.33 if self.verbose else 0.16),
             demo_mode=False)
         self.desk.top = self
         self.desk.tw = self.tw
@@ -77,7 +79,7 @@ class Application:
             self.tw(self.desk.frontend.screen_w - 2, ''))
 
         self.node = Node(self, port, label, pwd, alias,
-            self.on_error, self.on_connect, verbose=False)
+            self.error, self.on_connect, verbose=self.verbose)
         self.node.start()
 
     def disconnect(self):
@@ -92,8 +94,8 @@ class Application:
         self.desk.set_header(
             self.tw(self.desk.frontend.screen_w - 2, self.header))
 
-    def on_error(self, msg):
-        self.desk.print(msg)
+    def error(self, e):
+        self.desk.print(f'** ERROR ** {e}')
 
     def on_connect(self):
         self.desk.data['connect'] = True
