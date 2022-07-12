@@ -1,4 +1,4 @@
-from .. import config
+from .connection import Module as Connection
 
 import deskapp
 from deskapp.callback import callbacks
@@ -7,16 +7,12 @@ import lank.name
 import random
 
 
-#CLASS_ID = random.random()
-
 class Module(deskapp.Module):
-    #name = 'Peer'
-
     def __init__(self, app, label):
         super().__init__(app)
         self.classID = random.random()
         self.label = label
-        self.name = f' + {label}'
+        self.name = f'+ {label}'
 
         self.history = None
 
@@ -85,6 +81,22 @@ class Module(deskapp.Module):
 
         if self.scroll == 0:
             self.app.top.node.get_history(self.label, self.on_history)
+
+        else:
+            item = self.history.items[self.scroll-1]
+
+            if item.name == lank.name.PEER:
+                mod = Connection(self.app, item)
+                self.app.logic.setup_panel(mod)
+                # FIXME hack:
+                idx = self.app._menu.index(self)
+                if self.app._menu.index(mod) != idx+1:
+                    del self.app._menu[self.app._menu.index(mod)]
+                    self.app._menu.insert(idx+1, mod)
+                    oldpanels = self.app.logic.available_panels
+                    newpanels = { mod.name: oldpanels[mod.name]
+                                    for mod in self.app._menu }
+                    self.app.logic.available_panels = newpanels
 
     def on_history(self, history):
         self.history = history
