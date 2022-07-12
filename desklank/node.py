@@ -97,23 +97,17 @@ class Client(Thread):
         config.save_connect_label(self.label)
         config.save_connect_alias(self.alias)
 
-        #self.input.put_nowait(ListLabels())
-        #msg = self.output.get(timeout=GENERAL_TIMEOUT)
-        #if not msg: return
-        #if not isinstance(msg, LabelsList):
-        #    return self.error(f'failed to get labels list: {msg}')
+        self.input.put_nowait(ListLabels())
+        msg = self.output.get(timeout=GENERAL_TIMEOUT)
+        if not msg: return
+        if not isinstance(msg, LabelsList):
+            return self.error(f'failed to get labels list: {msg}')
 
-        #self.print(f'labels: {msg.labels}')
-        #self.app.home.pnl_labels.refresh_labels(msg.labels)
+        for label in msg.labels:
+            if label in self.app.interests:
+                self.input.put(LabelInterest(label))
 
-        #for label in msg.labels:
-        #    if label in self.app.home.pnl_labels.interests:
-        #        self.input.put(LabelInterest(label))
-
-        for label in self.app.interests:
-            self.input.put(LabelInterest(label))
-
-        self.on_connect()
+        self.on_connect(msg.labels)
 
     def interest(self, label, notify=True):
         self.input.put_nowait(

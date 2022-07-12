@@ -43,3 +43,11 @@ def load_interests():
 def save_interests(interests):
     _save_('interests', '\n'.join(interests))
 
+def load_peers():
+    config = _load_('peers')
+    if config is None: return [ ]
+    return config.split('\n')
+
+def save_peers(peers):
+    _save_('peers', '\n'.join(peers))
+

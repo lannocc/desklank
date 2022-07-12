@@ -3,6 +3,7 @@ from . import config
 from .page.connect import Module as Connect
 from .page.labels import Module as Labels
 from .page.peers import Module as Peers
+from .page.peer import Module as Peer
 from .node import Client as Node
 
 import deskapp
@@ -38,9 +39,11 @@ class Application:
             demo_mode=False)
         self.desk.top = self
         self.desk.tw = self.tw
+        self.desk.data['labels'] = [ ]
 
         self.node = None
         self.interests = config.load_interests()
+        self.peers = { label: None for label in config.load_peers() }
 
         self.finished = False
         self.exiting = False
@@ -64,7 +67,6 @@ class Application:
     def quit(self):
         if self.exiting: return
         self.exiting = True
-        #print('quit')
 
         if self.tray_icon:
             self.tray_icon.stop()
@@ -87,6 +89,7 @@ class Application:
     def disconnect(self):
         if not self.node: return
         self.desk.print('disconnecting')
+        self.desk.data['labels'] = [ ]
         node = self.node
         self.node = None
         node.stop()
@@ -99,11 +102,18 @@ class Application:
     def error(self, e):
         self.desk.print(f'** ERROR ** {e}')
 
-    def on_connect(self):
+    def on_connect(self, labels):
         self.desk.data['connect'] = True
-        self.desk.print('connected and ready')
+        self.desk.data['labels'] = sorted(labels)
 
-        #self.desk.logic.setup_panel(Labels(self.desk))
+        for label in self.desk.data['labels']:
+            if label in self.peers:
+                if not self.peers[label]:
+                    page = Peer(self.desk, label)
+                    self.desk.logic.setup_panel(page)
+                    self.peers[label] = page
+
+        self.desk.print('connected and ready')
 
     def notify(self, signed):
         if signed.name == lank.name.REGISTER:
@@ -123,10 +133,6 @@ class Application:
     def _notify_(self, title, msg):
         if self.tray_icon:
             self.tray_icon.notify(msg, f'{title} | desklank')
-
-        #else:
-        #    print(f'@@ NOTICE [{title}] @@')
-        #    print(f'   >>   {msg}')
 
         self.desk.set_header(self.tw(self.desk.frontend.screen_w - 2,
             f'[{title}] >> {msg}'))

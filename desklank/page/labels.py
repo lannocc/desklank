@@ -8,29 +8,28 @@ import random
 CLASS_ID = random.random()
 
 class Module(deskapp.Module):
-    name = 'Labels'
+    name = 'Interests'
 
     def __init__(self, app):
         super().__init__(app)
         self.classID = CLASS_ID
 
-        self.labels = [ ]
-
         self.register_module()
 
     def page(self, panel):
+        labels = self.app.data['labels']
         w = self.max_w - 2
 
         if self.app.top.node:
             self.scroll_elements = [
                 ('[Refresh]', 'Select the labels you are interested in:'
-                                if self.labels else None),
+                                if labels else None),
             ]
 
-            if self.labels:
+            if labels:
                 self.scroll_elements.extend(
                     [('[*]' if label in self.app.top.interests else '[ ]',
-                    label) for label in self.labels])
+                    label) for label in labels])
 
         else:
             self.scroll_elements = [ ]
@@ -53,7 +52,7 @@ class Module(deskapp.Module):
             self.app.top.node.get_labels(self.on_labels)
 
         else:
-            label = self.labels[self.scroll-1]
+            label = self.app.data['labels'][self.scroll-1]
             if label in self.app.top.interests:
                 del self.app.top.interests[self.app.top.interests.index(label)]
                 notify = False
@@ -64,5 +63,5 @@ class Module(deskapp.Module):
             self.app.top.node.interest(label, notify)
 
     def on_labels(self, labels):
-        self.labels = labels
+        self.app.data['labels'] = sorted(labels)
 
