@@ -86,7 +86,7 @@ class Module(deskapp.Module):
             item = self.history.items[self.scroll-1]
 
             if item.name == lank.name.PEER:
-                mod = Connection(self.app, item)
+                mod = Connection(self.app, self, item)
                 self.app.logic.setup_panel(mod)
                 # FIXME hack:
                 idx = self.app._menu.index(self)
@@ -97,6 +97,7 @@ class Module(deskapp.Module):
                     newpanels = { mod.name: oldpanels[mod.name]
                                     for mod in self.app._menu }
                     self.app.logic.available_panels = newpanels
+                self.app.logic.cur += 1
 
     def on_history(self, history):
         self.history = history

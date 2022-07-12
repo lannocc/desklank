@@ -1,6 +1,8 @@
 Copyright (C) 2022 LANNOCC (Shawn A. Wilson [lannocc@yahoo.com])
 @%@~LICENSE:MIT~@%@
 
+saw_071222_1 - A working (test) scrolling text viewer.
+
 saw_071122_3 - Beginning to implement the direct connection panels.
 
 saw_071122_2 - Implemented peer history.
