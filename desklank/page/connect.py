@@ -32,11 +32,11 @@ class Module(deskapp.Module):
         w = 22
 
         self.scroll_elements = [
+            (None, self.app.tw(12, f'[{connect}]')),
             ('Local Port:', self.app.tw(w, self.port)),
             ('     Alias:', self.app.tw(w, self.alias)),
             ('     Label:', self.app.tw(w, self.label)),
             ('  Password:', self.app.tw(w, pwd_masked)),
-            (None, self.app.tw(12, f'[{connect}]')),
         ]
 
         for idx, (label, value) in enumerate(self.scroll_elements):
@@ -47,21 +47,19 @@ class Module(deskapp.Module):
                 if idx == self.scroll else self.frontend.chess_white)
 
     def string_decider(self, panel, txt):
-        if self.scroll == 0:
+        if self.scroll == 1:
             try: self.port = int(txt)
             except ValueError: pass
-        elif self.scroll == 1:
-            self.alias = txt
         elif self.scroll == 2:
-            self.label = txt
+            self.alias = txt
         elif self.scroll == 3:
+            self.label = txt
+        elif self.scroll == 4:
             self.pwd = txt
-        else:
-            raise NotImplementedError()
 
     @deskapp.callback(CLASS_ID, deskapp.Keys.ENTER)
     def on_enter(self, *args, **kwargs):
-        if self.scroll == 4:
+        if self.scroll == 0:
             if self.app.data['connect'] is None:
                 self.app.top.connect(self.port, self.label, self.pwd,
                                      self.alias)

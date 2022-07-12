@@ -1,6 +1,8 @@
 Copyright (C) 2022 LANNOCC (Shawn A. Wilson [lannocc@yahoo.com])
 @%@~LICENSE:MIT~@%@
 
+saw_071122_2 - Implemented peer history.
+
 saw_071122_1 - Dynamic peer selection.
 
 saw_071022_6 - Now have a working Labels module.

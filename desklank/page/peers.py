@@ -57,7 +57,9 @@ class Module(deskapp.Module):
             if label in self.app.top.peers:
                 mod = self.app.top.peers[label]
                 if mod:
-                    del self.app.logic.available_panels[mod.name] #FIXME hack
+                    # FIXME hack:
+                    del self.app.logic.available_panels[mod.name]
+                    del self.app._menu[self.app._menu.index(mod)]
                 del self.app.top.peers[label]
             else:
                 mod = Peer(self.app, label)
