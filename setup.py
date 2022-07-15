@@ -9,8 +9,8 @@ def run():
         author_email='lannocc@yahoo.com',
         url='https://github.com/lannocc/desklank',
         packages=setuptools.find_packages(),
-        description='Text-mode peer-to-peer communication utilizing LANK and' \
-            + ' DeskApp frameworks',
+        description='Text-mode peer-to-peer encrypted communication utilizing' \
+            + ' LANK protocol and DeskApp framework',
         long_description_content_type='text/markdown',
         long_description=open('README.md').read(),
         classifiers=[
@@ -21,7 +21,7 @@ def run():
         install_requires=[
             'appdirs',
             'deskapp >= 0.0.4',
-            'lank >= 0.4.5',
+            'lank >= 0.4.6',
             'pillow',
             'pystray',
             'requests',

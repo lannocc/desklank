@@ -4,6 +4,7 @@ from .page.connect import Module as Connect
 from .page.labels import Module as Labels
 from .page.peers import Module as Peers
 from .page.peer import Module as Peer
+from .peer import Server
 from .node import Client as Node
 
 import deskapp
@@ -35,12 +36,14 @@ class Application:
             modules=[Connect, Labels, Peers],
             title=f'desklank v{__version__}',
             header=self.header,
-            v_split=(0.33 if self.verbose else 0.18),
+            v_split=(0.35 if self.verbose else 0.18),
+            h_split=0.2,
             demo_mode=False)
         self.desk.top = self
         self.desk.tw = self.tw
         self.desk.data['labels'] = [ ]
 
+        self.server = None
         self.node = None
         self.interests = config.load_interests()
         self.peers = { label: None for label in config.load_peers() }
@@ -82,25 +85,44 @@ class Application:
         self.desk.set_header(
             self.tw(self.desk.frontend.screen_w - 2, ''))
 
-        self.node = Node(self, port, label, pwd, alias,
-            self.error, self.on_connect, verbose=self.verbose)
-        self.node.start()
+        self.server = Server(self, label, port, verbose=self.verbose)
+        self.server.start()
+        self.server.ready.wait()
+
+        if self.server.sock:
+            self.node = Node(self, port, label, pwd, alias,
+                self.error, self.on_connect, verbose=self.verbose)
+            self.node.start()
+
+        else:
+            self.disconnect()
 
     def disconnect(self):
-        if not self.node: return
+        if not self.server: return
         self.desk.print('disconnecting')
         self.desk.data['labels'] = [ ]
-        node = self.node
-        self.node = None
-        node.stop()
-        node.join()
+
+        server = self.server
+        self.server = None
+        server.stop()
+        server.join()
+
+        if self.node:
+            node = self.node
+            self.node = None
+            node.stop()
+            node.join()
+
         self.desk.print('finished')
         self.desk.data['connect'] = None
         self.desk.set_header(
             self.tw(self.desk.frontend.screen_w - 2, self.header))
 
-    def error(self, e):
-        self.desk.print(f'** ERROR ** {e}')
+    def error(self, e, context=None):
+        ctxt = f'<{context}> ' if context else ''
+        etxt = f'{e}'
+        if not etxt: etxt = type(e)
+        self.desk.print(f'** ERROR {ctxt}** {etxt}')
 
     def on_connect(self, labels):
         self.desk.data['connect'] = True

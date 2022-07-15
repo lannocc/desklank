@@ -1,3 +1,5 @@
+from ..peer import Client as Peer
+
 import deskapp
 from deskapp.callback import callbacks
 import curses
@@ -6,11 +8,12 @@ import random
 
 
 class Module(deskapp.Module):
-    def __init__(self, app, parent, msg):
+    def __init__(self, app, parent, msg, pub_key):
         super().__init__(app)
         self.classID = random.random()
         self.parent = parent
         self.label = msg.label
+        self.pub_key = pub_key
 
         self.alias = ''
         if ':' in msg.key[msg.key.index(':')+1:]:
@@ -80,6 +83,14 @@ class Module(deskapp.Module):
         self.max_w -= 2
         self.max_h -= 3
 
+        host = self.address[:self.address.index(':')]
+        port = int(self.address[self.address.index(':')+1:])
+
+        self.peer = Peer(self.app.top, self.pub_key, host, port,
+            verbose=self.app.top.verbose)
+        self.peer.start()
+
+        '''
         self.lines = [f'line {i}' for i in range(100)] #FIXME
         if len(self.lines) > self.max_h:
             self.scroll_elements = [
@@ -89,8 +100,15 @@ class Module(deskapp.Module):
         else:
             self.scroll_elements = [ None ]
         self.sdiff = len(self.lines) - len(self.scroll_elements)
+        '''
+        self.lines = [ ]
+        self.scroll_elements = [ None ]
+        self.sdiff = -1
 
         self.register_module()
+
+    def add_history(dt, is_self, txt):
+        pass
 
     def page(self, panel):
         w = int((self.max_w - 2 - self.el_width) / (len(self.elements) + 1))
@@ -117,7 +135,17 @@ class Module(deskapp.Module):
                 idx -= 1
             self.app.logic.cur = idx
             del self.app.logic.available_panels[self.name]
-            del self.app._menu[self]
+            del self.app._menu[self.app._menu.index(self)]
+
+            self.peer.stop()
+            self.peer.join()
+            self.app.print('all done with connection')
+
+    def string_decider(self, panel, txt):
+        if self.cur_el == 0:
+            if txt:
+                self.add_history(datetime.now(), True, txt)
+                self.peer.text(txt)
 
     '''
     #def on_scroll_up(self, *args, **kwargs):

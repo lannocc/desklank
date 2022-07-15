@@ -1,6 +1,7 @@
 # desklank
 
-Text-mode peer-to-peer communication utilizing LANK and DeskApp frameworks.
+Text-mode peer-to-peer encrypted communication utilizing LANK protocol and
+DeskApp framework.
 
 ## Installation
 

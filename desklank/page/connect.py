@@ -52,6 +52,7 @@ class Module(deskapp.Module):
             except ValueError: pass
         elif self.scroll == 2:
             self.alias = txt
+            self.app.print(self.alias)
         elif self.scroll == 3:
             self.label = txt
         elif self.scroll == 4:

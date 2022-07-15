@@ -8,7 +8,6 @@ from requests import get
 from threading import Thread
 from queue import Queue, Empty
 import socket
-import sys
 
 
 class Client(Thread):
@@ -34,6 +33,7 @@ class Client(Thread):
         self.sign_on = False
         self.labels_callback = None
         self.history_callback = None
+        self.register_callback = None
 
         self.sender_thread = Thread(
             name='node-client-sender', target=self.sender)
@@ -52,15 +52,15 @@ class Client(Thread):
                 self.node = Handler(sock, addr)
                 self.node.hello()
                 self.node.sock.settimeout(GENERAL_TIMEOUT)
-                self.print('[READY]')
+                #self.print('[READY]')
                 break
 
             except ConnectionRefusedError:
-                self.print('[REFUSED]')
+                self.print(f'[REFUSED] {addr}')
                 self.node = None
 
             except socket.timeout:
-                self.print('[TIMEOUT]')
+                self.print(f'[TIMEOUT] {addr}')
                 self.node = None
 
         if not self.node: return
@@ -76,6 +76,9 @@ class Client(Thread):
         try:
             crypto = get_crypto(msg.version)
             priv_key = crypto.load_private_key(msg.key_pair_pem, self.pwd)
+
+            self.app.server.crypto = crypto
+            self.app.server.priv_key = priv_key
 
         except TypeError as e:
             return self.error(f'failed to unlock private key: {e}')
@@ -120,12 +123,28 @@ class Client(Thread):
         self.labels_callback = callback
         self.input.put_nowait(ListLabels())
 
+    def get_registration(self, label, callback):
+        if self.register_callback:
+            return self.error(f'never received last registration request')
+
+        self.register_callback = callback
+        self.input.put_nowait(GetRegistration(label))
+
     def get_history(self, label, callback):
         if self.history_callback:
             return self.error(f'never received last history request')
 
         self.history_callback = callback
-        self.input.put_nowait(GetHistory(label))
+        self.register_callback = self._get_history_
+
+        self.input.put_nowait(GetRegistration(label))
+
+    def _get_history_(self, registration):
+        callback = self.history_callback
+        def history_callback(history):
+            callback(registration, history)
+        self.history_callback = history_callback
+        self.input.put_nowait(GetHistory(registration.label))
 
     def stop(self):
         if not self.node: return
@@ -137,10 +156,9 @@ class Client(Thread):
         self.output.put_nowait(None)
         self.input.put_nowait(None)
 
-        #self.app.home.pnl_labels.refresh_labels()
-
     def join(self):
         self.receiver_thread.join()
+        self.sender_thread.join()
         super().join()
 
     def sender(self):
@@ -197,6 +215,10 @@ class Client(Thread):
                     self.history_callback(msg)
                     self.history_callback = None
 
+                elif isinstance(msg, Registration) and self.register_callback:
+                    self.register_callback(msg)
+                    self.register_callback = None
+
                 else:
                     self.output.put(msg)
 
@@ -223,14 +245,6 @@ class Client(Thread):
 
     def print(self, msg, newline=True):
         if not self.verbose: return
-
-        #if newline:
-        #    print(msg)
-
-        #else:
-        #    print(msg, end='')
-        #    sys.stdout.flush()
-
         self.app.desk.print(msg)
 
     def error(self, e):

@@ -3,6 +3,7 @@ from .connection import Module as Connection
 import deskapp
 from deskapp.callback import callbacks
 import lank.name
+from lank.crypto import get_handler as get_crypto
 
 import random
 
@@ -14,6 +15,7 @@ class Module(deskapp.Module):
         self.label = label
         self.name = f'+ {label}'
 
+        self.pub_key = None
         self.history = None
 
         callbacks.append({
@@ -86,7 +88,7 @@ class Module(deskapp.Module):
             item = self.history.items[self.scroll-1]
 
             if item.name == lank.name.PEER:
-                mod = Connection(self.app, self, item)
+                mod = Connection(self.app, self, item, self.pub_key)
                 self.app.logic.setup_panel(mod)
                 # FIXME hack:
                 idx = self.app._menu.index(self)
@@ -99,6 +101,8 @@ class Module(deskapp.Module):
                     self.app.logic.available_panels = newpanels
                 self.app.logic.cur += 1
 
-    def on_history(self, history):
+    def on_history(self, registration, history):
+        crypto = get_crypto(registration.version)
+        self.pub_key = crypto.load_public_key(registration.key_pair_pem)
         self.history = history
 
