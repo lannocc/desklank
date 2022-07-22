@@ -5,6 +5,7 @@ from deskapp.callback import callbacks
 import curses
 
 import random
+from datetime import datetime
 
 
 class Module(deskapp.Module):
@@ -105,10 +106,52 @@ class Module(deskapp.Module):
         self.scroll_elements = [ None ]
         self.sdiff = -1
 
+        self.last_dt = None
+
         self.register_module()
 
-    def add_history(dt, is_self, txt):
-        pass
+    def add_history(self, dt, is_self, txt):
+        if not (self.last_dt and self.last_dt.date() == dt.date()):
+            self.lines.append([dt.strftime('%A, %B %d, %Y'), None, None,
+                is_self])
+
+        self.last_dt = dt
+
+        time = f'{int(dt.strftime("%I"))}:{dt.strftime("%M %p")}'
+        user = self.label
+        if self.alias: user += '/' + self.alias
+        user = f'[{user}]'
+
+        rows = [ ]
+        pad = len(time) + len(user) + 2
+        avail = self.max_w - pad
+
+        if pad > self.max_w - 10:
+            raise ValueError('screen width too small: {self.max_w}')
+
+        while len(txt) > avail:
+            try:
+                space = txt.rindex(' ', 0, avail)
+                rows.append(txt[:space])
+                txt = txt[space+1:]
+
+            except ValueError:
+                rows.append(txt[:avail])
+                txt = txt[avail:]
+
+        rows.append(txt)
+
+        self.lines.append([time, user, rows[0], is_self])
+        for row in rows[1:]:
+            self.lines.append([len(time), len(user), row, is_self])
+
+        if len(self.lines) > self.max_h:
+            self.scroll_elements = [
+                None for i in range(len(self.lines) - self.max_h + 1)
+            ]
+            self.scroll = len(self.scroll_elements) - 1
+
+        self.sdiff = len(self.lines) - len(self.scroll_elements)
 
     def page(self, panel):
         w = int((self.max_w - 2 - self.el_width) / (len(self.elements) + 1))
@@ -121,11 +164,36 @@ class Module(deskapp.Module):
             panel.addstr(1, h + w, el, color)
             h += w + len(el)
 
+        dt_color = self.frontend.chess_white
+        self_color = self.frontend.color_gb
+        user_color = self.frontend.color_cb
+
         for v in range(self.max_h):
             y = self.max_h + 1 - v
             idx = self.scroll + self.sdiff - v
             if idx < 0: break
-            panel.addstr(y, 1, self.app.tw(self.max_w, self.lines[idx]))
+
+            line = self.lines[idx]
+            dt = line[0]
+            user = line[1]
+            txt = line[2]
+            is_self = line[3]
+
+            if isinstance(user, str) and txt:
+                panel.addstr(y, 1, dt, dt_color)
+                panel.addstr(y, 1 + len(dt), ' ')
+                panel.addstr(y, 2 + len(dt), user,
+                    self_color if is_self else user_color)
+                panel.addstr(y, 2 + len(dt) + len(user), self.app.tw(
+                    self.max_w - len(dt) - len(user) - 1, f' {txt}'))
+
+            elif txt:
+                panel.addstr(y, 1, self.app.tw(dt + user + 2))
+                panel.addstr(y, 3 + dt + user, self.app.tw(
+                    self.max_w - dt - user - 2, txt))
+
+            else:
+                panel.addstr(y, 1, self.app.tw(self.max_w, dt), dt_color)
 
     def on_enter(self, *args, **kwargs):
         if self.cur_el == 2:
