@@ -129,6 +129,41 @@ class Server(Thread):
         except socket.timeout:
             self.error(f' - terminated {addr} [HELLO TIMEOUT]', True, False)
 
+    def on_peered(self, handler):
+        from .page.peer import Module as Peer
+        from .page.connection import Module as Connection
+
+        label = handler.label
+        addr = handler.addr
+        #pub_key = handler.pub_key
+
+        self.app._notify_(label, f'new connection from {label} {addr}')
+        peer = None
+
+        for mod in self.app.desk._menu:
+            if isinstance(mod, Peer):
+                if mod.label == label:
+                    peer = mod
+                    break
+
+        if not peer:
+            peer = Peer(self.app.desk, label)
+            self.app.desk.logic.setup_panel(peer)
+
+        mod = Connection(self.app.desk, peer, label, '', f'{addr[0]}:{addr[1]}',
+            handler)
+        self.app.desk.logic.setup_panel(mod)
+
+        # FIXME hack:
+        idx = self.app.desk._menu.index(peer)
+        if self.app.desk._menu.index(mod) != idx+1:
+            del self.app.desk._menu[self.app.desk._menu.index(mod)]
+            self.app.desk._menu.insert(idx+1, mod)
+            oldpanels = self.app.desk.logic.available_panels
+            newpanels = { mod.name: oldpanels[mod.name]
+                            for mod in self.app.desk._menu }
+            self.app.desk.logic.available_panels = newpanels
+
     def on_text(self, msg, handler):
         self.print(f'server got text: {msg}')
 

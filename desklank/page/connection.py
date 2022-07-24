@@ -9,18 +9,14 @@ from datetime import datetime
 
 
 class Module(deskapp.Module):
-    def __init__(self, app, parent, msg, pub_key):
+    def __init__(self, app, parent, label, alias, address, peer):
         super().__init__(app)
         self.classID = random.random()
         self.parent = parent
-        self.label = msg.label
-        self.pub_key = pub_key
-
-        self.alias = ''
-        if ':' in msg.key[msg.key.index(':')+1:]:
-            alias = msg.key[msg.key.index(':')+1:]
-            self.alias = alias[alias.index(':')+1:]
-        self.address = msg.address
+        self.label = label
+        self.alias = alias
+        self.address = address
+        self.peer = peer
 
         #name = '    '
         #if self.alias: name += f'{self.alias} '
@@ -83,13 +79,6 @@ class Module(deskapp.Module):
 
         self.max_w -= 2
         self.max_h -= 3
-
-        host = self.address[:self.address.index(':')]
-        port = int(self.address[self.address.index(':')+1:])
-
-        self.peer = Peer(self.app.top, self.pub_key, host, port,
-            verbose=self.app.top.verbose)
-        self.peer.start()
 
         '''
         self.lines = [f'line {i}' for i in range(100)] #FIXME

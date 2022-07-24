@@ -1,4 +1,5 @@
 from .connection import Module as Connection
+from ..peer import Client as Peer
 
 import deskapp
 from deskapp.callback import callbacks
@@ -88,8 +89,22 @@ class Module(deskapp.Module):
             item = self.history.items[self.scroll-1]
 
             if item.name == lank.name.PEER:
-                mod = Connection(self.app, self, item, self.pub_key)
+                alias = ''
+                if ':' in item.key[item.key.index(':')+1:]:
+                    alias = item.key[item.key.index(':')+1:]
+                    alias = alias[alias.index(':')+1:]
+
+                host = item.address[:item.address.index(':')]
+                port = int(item.address[item.address.index(':')+1:])
+
+                peer = Peer(self.app.top, self.pub_key, host, port,
+                    verbose=self.app.top.verbose)
+                peer.start()
+
+                mod = Connection(self.app, self, item.label, alias,
+                    item.address, peer)
                 self.app.logic.setup_panel(mod)
+
                 # FIXME hack:
                 idx = self.app._menu.index(self)
                 if self.app._menu.index(mod) != idx+1:

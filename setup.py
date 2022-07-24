@@ -21,7 +21,7 @@ def run():
         install_requires=[
             'appdirs',
             'deskapp >= 0.0.4',
-            'lank >= 0.4.6',
+            'lank >= 0.4.7',
             'pillow',
             'pystray',
             'requests',
