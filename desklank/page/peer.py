@@ -97,7 +97,7 @@ class Module(deskapp.Module):
                 host = item.address[:item.address.index(':')]
                 port = int(item.address[item.address.index(':')+1:])
 
-                peer = Peer(self.app.top, self.pub_key, host, port,
+                peer = Peer(self.app.top, self.label, self.pub_key, host, port,
                     verbose=self.app.top.verbose)
                 peer.start()
 

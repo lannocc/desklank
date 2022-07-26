@@ -1,5 +1,3 @@
-from ..peer import Client as Peer
-
 import deskapp
 from deskapp.callback import callbacks
 import curses
@@ -99,7 +97,7 @@ class Module(deskapp.Module):
 
         self.register_module()
 
-    def add_history(self, dt, is_self, txt):
+    def add_history(self, is_self, txt, dt=datetime.now()):
         if not (self.last_dt and self.last_dt.date() == dt.date()):
             self.lines.append([dt.strftime('%A, %B %d, %Y'), None, None,
                 is_self])
@@ -201,7 +199,7 @@ class Module(deskapp.Module):
     def string_decider(self, panel, txt):
         if self.cur_el == 0:
             if txt:
-                self.add_history(datetime.now(), True, txt)
+                self.add_history(True, txt)
                 self.peer.text(txt)
 
     '''

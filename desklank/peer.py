@@ -79,6 +79,12 @@ class Server(Thread):
                         if protocol:
                             #self.print('got handler')
                             protocol.print = self.print
+
+                            def text(txt):
+                                self.text(protocol, txt)
+
+                            protocol.text = text
+
                             try:
                                 def server():
                                     try:
@@ -165,7 +171,32 @@ class Server(Thread):
             self.app.desk.logic.available_panels = newpanels
 
     def on_text(self, msg, handler):
-        self.print(f'server got text: {msg}')
+        #self.print(f'server got text: {msg}')
+        from .page.connection import Module as Connection
+
+        label = handler.label
+        addr = handler.addr
+
+        self.app._notify_(label, f'new message from {label} {addr}')
+        peer = None
+
+        for mod in self.app.desk._menu:
+            if isinstance(mod, Connection):
+                if mod.peer is handler:
+                    peer = mod
+                    break
+
+        if not peer:
+            self.error(f'no module for {handler}', stop=False)
+            return
+
+        peer.add_history(False, msg.text)
+
+    def text(self, handler, txt):
+        #self.print(f'sending text to {handler}')
+        msg = Text(txt)
+        self.print(f'S    {handler.addr} <- {msg}')
+        handler.send(msg)
 
     def stop(self):
         if not self.sock: return
@@ -209,11 +240,12 @@ class Server(Thread):
 
 
 class Client(Thread):
-    def __init__(self, app, pub_key, host, port, verbose=True):
+    def __init__(self, app, label, pub_key, host, port, verbose=True):
         super().__init__(name='peer-client')
         self.app = app
         self.verbose = verbose
 
+        self.label = label
         self.pub_key = pub_key
         self.host = host
         self.port = port
@@ -262,8 +294,27 @@ class Client(Thread):
     def text(self, txt):
         self.input.put_nowait(Text(txt))
 
-    def on_text(self, msg, handler):
-        self.print(f'client got text: {msg}')
+    def on_text(self, msg):
+        #self.print(f'client got text: {msg}')
+        from .page.connection import Module as Connection
+
+        label = self.label
+        addr = self.peer.addr
+
+        self.app._notify_(label, f'new message from {label} {addr}')
+        peer = None
+
+        for mod in self.app.desk._menu:
+            if isinstance(mod, Connection):
+                if mod.peer is self:
+                    peer = mod
+                    break
+
+        if not peer:
+            self.error(f'no module for {self}', stop=False)
+            return
+
+        peer.add_history(False, msg.text)
 
     def stop(self):
         if not self.peer: return
@@ -329,6 +380,9 @@ class Client(Thread):
 
                     self.ping = None
 
+                elif isinstance(msg, Text):
+                    self.on_text(msg)
+
                 else:
                     #self.output.put(msg)
                     self.print(f'unhandled message: {msg}')
@@ -357,11 +411,11 @@ class Client(Thread):
         if not self.verbose: return
         self.app.desk.print(msg)
 
-    def error(self, e, force=False):
+    def error(self, e, force=False, stop=True):
         #txt = f'{e}'
         #if not txt: txt = type(e)
         #self.print(f'** PEER CLIENT ERROR ** {txt}')
         if not force and not self.peer: return
         self.app.error(e, 'peer client')
-        self.stop()
+        if stop: self.stop()
 
