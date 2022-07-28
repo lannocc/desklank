@@ -1,5 +1,6 @@
 from .__version__ import __version__
 from . import config
+from .sounds import Beeper
 from .page.connect import Module as Connect
 from .page.labels import Module as Labels
 from .page.peers import Module as Peers
@@ -43,6 +44,8 @@ class Application:
         self.desk.tw = self.tw
         self.desk.data['labels'] = [ ]
 
+        self.sounds = Beeper()
+
         self.server = None
         self.node = None
         self.interests = config.load_interests()
@@ -56,6 +59,7 @@ class Application:
             if self.tray_thread:
                 self.tray_thread.start()
 
+            self.sounds.start()
             self.desk.start()
             self.finished = True
 
@@ -73,6 +77,9 @@ class Application:
 
         if self.tray_icon:
             self.tray_icon.stop()
+
+        self.sounds.stop()
+        self.sounds.join()
 
         if not self.finished:
             self.desk.close()
@@ -99,6 +106,7 @@ class Application:
 
     def disconnect(self):
         if not self.server: return
+
         self.desk.print('disconnecting')
         self.desk.data['labels'] = [ ]
 
@@ -117,12 +125,14 @@ class Application:
         self.desk.data['connect'] = None
         self.desk.set_header(
             self.tw(self.desk.frontend.screen_w - 2, self.header))
+        self.sounds.beep('error')
 
     def error(self, e, context=None):
         ctxt = f'<{context}> ' if context else ''
         etxt = f'{e}'
         if not etxt: etxt = type(e)
         self.desk.print(f'** ERROR {ctxt}** {etxt}')
+        self.sounds.beep('robot_error')
 
     def on_connect(self, labels):
         self.desk.data['connect'] = True
@@ -136,28 +146,35 @@ class Application:
                     self.peers[label] = page
 
         self.desk.print('connected and ready')
+        self.desk.set_header(
+            self.tw(self.desk.frontend.screen_w - 2, 'You are connected'))
+        self.sounds.beep('success')
 
     def notify(self, signed):
         if signed.name == lank.name.REGISTER:
             self._notify_(signed.label, f'{signed.label} has changed keys')
 
         elif signed.name == lank.name.PEER:
-            msg = f'{signed.label} signed on'
-            if ':' in signed.key[signed.key.index(':')+1:]:
-                alias = signed.key[signed.key.index(':')+1:]
-                alias = alias[alias.index(':')+1:]
-                msg += f' as {alias}'
-            self._notify_(signed.label, msg)
+            if self.desk.data['connect']:
+                msg = f'{signed.label} signed on'
+                if ':' in signed.key[signed.key.index(':')+1:]:
+                    alias = signed.key[signed.key.index(':')+1:]
+                    alias = alias[alias.index(':')+1:]
+                    msg += f' as {alias}'
+                self._notify_(signed.label, msg, 'ping')
 
         else:
             self._notify_(signed.label, f'{signed.label} has done something')
 
-    def _notify_(self, title, msg):
+    def _notify_(self, title, msg, sound=None):
         if self.tray_icon:
             self.tray_icon.notify(msg, f'{title} | desklank')
 
         self.desk.set_header(self.tw(self.desk.frontend.screen_w - 2,
             f'[{title}] >> {msg}'))
+
+        if sound:
+            self.sounds.beep(sound)
 
     def tw(self, w, txt='', c=' '):
         if not isinstance(txt, str): txt = f'{txt}'

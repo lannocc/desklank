@@ -143,7 +143,7 @@ class Server(Thread):
         addr = handler.addr
         #pub_key = handler.pub_key
 
-        self.app._notify_(label, f'new connection from {label} {addr}')
+        self.app._notify_(label, f'new connection from {label} {addr}', 'ready')
         peer = None
 
         for mod in self.app.desk._menu:
@@ -177,7 +177,7 @@ class Server(Thread):
         label = handler.label
         addr = handler.addr
 
-        self.app._notify_(label, f'new message from {label} {addr}')
+        self.app._notify_(label, f'new message from {label} {addr}', 'coin')
         peer = None
 
         for mod in self.app.desk._menu:
@@ -301,7 +301,7 @@ class Client(Thread):
         label = self.label
         addr = self.peer.addr
 
-        self.app._notify_(label, f'new message from {label} {addr}')
+        self.app._notify_(label, f'new message from {label} {addr}', 'coin')
         peer = None
 
         for mod in self.app.desk._menu:

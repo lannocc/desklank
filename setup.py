@@ -20,6 +20,7 @@ def run():
         ],
         install_requires=[
             'appdirs',
+            'beepy',
             'deskapp >= 0.0.4',
             'lank >= 0.4.7',
             'pillow',

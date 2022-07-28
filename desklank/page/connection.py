@@ -97,7 +97,9 @@ class Module(deskapp.Module):
 
         self.register_module()
 
-    def add_history(self, is_self, txt, dt=datetime.now()):
+    def add_history(self, is_self, txt, dt=None):
+        if dt is None: dt = datetime.now()
+
         if not (self.last_dt and self.last_dt.date() == dt.date()):
             self.lines.append([dt.strftime('%A, %B %d, %Y'), None, None,
                 is_self])
